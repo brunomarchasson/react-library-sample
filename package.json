@@ -1,5 +1,8 @@
 {
-  "name": "react-library-template",
+  "name": "@brunomarchasson/react-library-sample",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/brunomarchasson"
+  },
   "version": "1.0.0",
   "type": "module",
   "description": "",
