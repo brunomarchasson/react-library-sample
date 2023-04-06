@@ -1,6 +1,7 @@
 module.exports = {
-    testEnvironment: "jsdom",
+    testEnvironment: "./custom-jest-environment.cjs",
     moduleNameMapper: {
       ".(css|less|scss)$": "identity-obj-proxy",
     },
+    
   };
