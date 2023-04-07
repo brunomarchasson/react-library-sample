@@ -1,22 +1,50 @@
 import React from "react";
-import { ComponentStory, ComponentMeta } from "@storybook/react";
+// import { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { Meta, StoryObj } from '@storybook/react';
+
 import Viewer from "./Viewer";
+import imageFile from '../../../__mocks__/imgUri';
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
-export default {
-  title: "ReactComponentLibrary/Viewer",
+const meta = {
+  title: 'ReactComponentLibrary/Viewer',
   component: Viewer,
-} as ComponentMeta<typeof Viewer>;
+  tags: ['autodocs'],
+  render: (args, { loaded }) => <Viewer {...args} {...loaded} />,
+} satisfies Meta<typeof Viewer>;;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof Viewer> = (args) => <Viewer {...args} />;
+export default meta;
 
-export const Empty = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Empty.args = {
+type Story = StoryObj<typeof Viewer>;
+
+export const Empty: Story = {
 };
 
-// export const ClickMe = Template.bind({});
-// ClickMe.args = {
-//   label: "Click me!",
-// };
+export const ImageUri: Story = {
+  args: {
+    file: imageFile
+  }
+};
+export const ImageUrl: Story = {
+  args: {
+    type:"image/",
+    file: "https://picsum.photos/200/300"
+  }
+};
+
+export const ImageFile: Story = {
+  loaders: [
+    async () => {
+      const file =  await urltoFile(imageFile,'img.png','image/png')
+      console.log('file', file)
+      return ({
+      file,
+    })},
+  ],
+};
+
+function urltoFile(url, filename, mimeType){
+  return (fetch(url)
+      .then(function(res){return res.arrayBuffer();})
+      .then(function(buf){return new File([buf], filename,{type:mimeType});})
+  );
+}

@@ -1,5 +1,5 @@
 
-import { FileType } from './types';
+import { Ifile } from './types';
 
 const prefix: string = 'Invariant failed';
 
@@ -76,7 +76,7 @@ export function isProvided(variable:any) {
  *
  * @param {*} variable Variable to check
  */
-export function isString(variable:FileType) {
+export function isString(variable:string) {
   return typeof variable === 'string';
 }
 
@@ -87,7 +87,7 @@ export function isString(variable:FileType) {
  *
  * @param {*} variable Variable to check
  */
-export function isBlob(variable: FileType) {
+export function isBlob(variable: Ifile) {
   invariant(isBrowser, 'isBlob can only be used in a browser environment');
 
   return variable instanceof Blob;
@@ -98,10 +98,62 @@ export function isBlob(variable: FileType) {
  *
  * @param {string} str String to check
  */
-export function isDataURI(str: FileType) {
+
+export function isDataURI(str: string) {
   return isString(str) && /^data:/.test(str as string);
 }
-
+export function blobToUri(blob:Blob){
+    return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+    
+        reader.onload = () => {
+          resolve(reader.result as string);
+        };
+    
+        reader.onerror = (event) => {
+          if (!event.target) {
+            return reject(new Error('Error while reading a file.'));
+          }
+    
+          const { error } = event.target;
+    
+          switch (error?.code) {
+            case error?.NOT_FOUND_ERR:
+              return reject(new Error('Error while reading a file: File not found.'));
+            case error?.SECURITY_ERR:
+              return reject(new Error('Error while reading a file: Security error.'));
+            case error?.ABORT_ERR:
+              return reject(new Error('Error while reading a file: Aborted.'));
+            default:
+              return reject(new Error('Error while reading a file.'));
+          }
+        };
+    
+        reader.readAsDataURL(blob);
+      });
+}
+function arrayBufferToBase64( buffer :ArrayBuffer):string {
+	var binary = '';
+	var bytes = new Uint8Array( buffer );
+	var len = bytes.byteLength;
+	for (var i = 0; i < len; i++) {
+		binary += String.fromCharCode( bytes[ i ] );
+	}
+    console.log('rrr', binary)
+	return window.btoa( binary );
+}
+function base64ToArrayBuffer(base64: string) : ArrayBuffer {
+    var binary_string =  window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array( len );
+    for (var i = 0; i < len; i++)        {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+export function arrayBufferToUri(buffer:ArrayBuffer, type:string){
+   return `data:${type};base64,${arrayBufferToBase64(buffer)}`
+} 
 export function dataURItoByteString(dataURI: string) {
   invariant(isDataURI(dataURI), 'Invalid data URI.');
 
@@ -130,7 +182,7 @@ export function isCancelException(error: {name:string}) {
   return error.name === 'RenderingCancelledException';
 }
 
-export function loadFromFile(file) {
+export function loadFromFile(file: Blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 

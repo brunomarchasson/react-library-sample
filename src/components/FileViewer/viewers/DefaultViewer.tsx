@@ -1,6 +1,6 @@
 import React from 'react'
 
-function DefaultViewer({source}) {
+function DefaultViewer({}) {
   return (
     <div>DefaultViewer</div>
   )

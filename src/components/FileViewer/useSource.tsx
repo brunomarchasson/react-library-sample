@@ -1,8 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { FileType } from "./types";
+import React, { useCallback, useEffect, useState } from "react";
+import { Ifile, fileType, sourceType } from "./types";
 import {
+  arrayBufferToUri,
+  blobToUri,
   cancelRunningTask,
   dataURItoByteString,
+  fileToUri,
   invariant,
   isBlob,
   isBrowser,
@@ -12,22 +15,28 @@ import {
 } from "./utils";
 import { isArrayBuffer } from "./utils/isArrayBuffer";
 
+
+
 export interface useSourceProps {
   onSourceError?: (error: Error | null) => void;
   onSourceSuccess?: () => void;
-  file?: FileType;
+  file?: fileType;
+  type?: string;
 }
-
 
 export default function useSource({
   file,
+  type,
   onSourceError: onSourceErrorProps,
   onSourceSuccess: onSourceSuccessProps,
-} : useSourceProps = {}) {
-    const [source, setSource] = useState<{} | null | undefined>(undefined);
-    const [sourceError, setSourceError] = useState(null);
+}: useSourceProps = {}): {
+  source: sourceType | null | undefined;
+  error: Error | null;
+} {
+  const [source, setSource] = useState<sourceType | null | undefined>(undefined);
+  const [sourceError, setSourceError] = useState<Error | null>(null);
 
-    /**
+  /**
    * Called when a document source is resolved correctly
    */
   function onSourceSuccess() {
@@ -45,34 +54,51 @@ export default function useSource({
     }
   }
 
-    function resetSource() {
+  function resetSource() {
     setSource(undefined);
     setSourceError(null);
   }
 
-  
   useEffect(resetSource, [file]);
 
-  const findDocumentSource = useCallback(async (): Promise<{} | null> => {
+  
+
+  const findDocumentSource = useCallback(async (): Promise<sourceType | null> => {
     if (!file) {
       return null;
     }
 
+    const getType = ():string => {
+      if(type) return type 
+      if((file as Ifile)?.type) return (file as Ifile)?.type ?? '' 
+      if(typeof file === "string" && isDataURI(file as string)){
+        return file.substring(file.indexOf(":")+1, file.indexOf(";"))
+      }
+      return ''
+    };
+    const currentType = getType()
     // File is a string
     if (typeof file === "string") {
-      if (isDataURI(file)) {
-        const fileByteString = dataURItoByteString(file);
-        return { data: fileByteString };
-      }
+      console.log("string");
 
-      return { url: file };
+      return { 
+        type: currentType,
+        uri: file as string,
+        get data(){ 
+          if(!isDataURI(file)) return null;
+          return dataURItoByteString(file)
+        }
+      };
     }
 
     // File is an ArrayBuffer
-    console.log('array')
     if (isArrayBuffer(file)) {
-        console.log('yes')
-      return { data: file };
+      console.log("arrayBuffer");
+      return { 
+        type: currentType,
+        get uri(){return arrayBufferToUri(file as ArrayBuffer,currentType)},
+        data: file
+      };
     }
 
     /**
@@ -81,15 +107,15 @@ export default function useSource({
      */
     if (isBrowser) {
       // File is a Blob
-      console.log('blob')
       if (isBlob(file)) {
-
-        const data = await loadFromFile(file);
-
-        return { data };
+        console.log("blob");
+        return { 
+          type: currentType,
+          get uri(){return blobToUri(file as File)},
+          get data(){return loadFromFile(file as Blob)}
+        };
       }
     }
-    console.log(file)
     // At this point, file must be an object
     invariant(
       typeof file === "object",
@@ -103,21 +129,26 @@ export default function useSource({
 
     // File .url is a string
     if ("url" in file && typeof file.url === "string") {
-      if (isDataURI(file.url)) {
-        const { url, ...otherParams } = file;
-        const fileByteString = dataURItoByteString(url);
-        return { data: fileByteString, ...otherParams };
-      }
+      const { url, ...otherParams } = file;
+      return { 
+        type: currentType,
+        uri: url,
+        get data(){ 
+          if(!isDataURI(url)) return null;
+          return dataURItoByteString(url)
+        },
+        ...otherParams
+      };
     }
 
-    return file;
+    return {type: currentType, ...file};
   }, [file]);
 
   useEffect(() => {
     const cancellable = makeCancellablePromise(findDocumentSource());
 
     cancellable.promise.then(setSource).catch((error) => {
-      setSource(false);
+      setSource(null);
       setSourceError(error);
     });
 
@@ -128,7 +159,7 @@ export default function useSource({
 
   useEffect(
     () => {
-      if (typeof source === 'undefined') {
+      if (typeof source === "undefined") {
         return;
       }
 
@@ -140,8 +171,8 @@ export default function useSource({
     },
     // Ommitted callbacks so they are not called every time they change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [source],
+    [source]
   );
 
-  return {source, error: sourceError}
+  return { source, error: sourceError };
 }

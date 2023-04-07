@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 export function makeAsyncCallback(callbackValue) {
   let promiseResolve;
@@ -14,13 +15,14 @@ export function makeAsyncCallback(callbackValue) {
   return { promise, func };
 }
 
-export function loadPDF(path) {
-  const raw = fs.readFileSync(path);
+export function loadFile(filePath, fileType) {
+  const raw = fs.readFileSync(filePath);
   const arrayBuffer = raw.buffer;
-
+  const type = fileType ?? path.extname(filePath)
   return {
     raw,
     arrayBuffer,
+    type,
     get blob() {
       return new Blob([arrayBuffer], { type: 'application/pdf' });
     },

@@ -7,14 +7,14 @@ import Viewer from "./Viewer";
 
 import {
   makeAsyncCallback,
-  loadPDF,
+  loadFile,
   muteConsole,
   restoreConsole,
 } from "../../../test-utils";
 import path from "path";
 
-const pdfFile = loadPDF("./__mocks__/_pdf.pdf");
-const pdfFile2 = loadPDF("./__mocks__/_pdf2.pdf");
+const pdfFile = loadFile("./__mocks__/_pdf.pdf");
+const pdfFile2 = loadFile("./__mocks__/_pdf2.pdf");
 
 const OK = Symbol("OK");
 

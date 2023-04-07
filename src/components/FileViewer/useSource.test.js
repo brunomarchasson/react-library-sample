@@ -1,19 +1,20 @@
 import React, { createRef } from "react";
-import { renderHook,fireEvent, getByTestId, render, act, waitFor } from "@testing-library/react";
-// import {  } from '@testing-library/react-hooks'
+import { fireEvent, getByTestId, render } from "@testing-library/react";
+import { renderHook } from '@testing-library/react-hooks'
 import useSource from "./useSource";
 
 import {
   makeAsyncCallback,
-  loadPDF,
+  loadFile,
   muteConsole,
   restoreConsole,
 } from "../../../test-utils";
 import path from "path";
 import { waitFor } from "@storybook/testing-library";
 
-const pdfFile = loadPDF("./__mocks__/_pdf.pdf");
-const pdfFile2 = loadPDF("./__mocks__/_pdf2.pdf");
+// const imgFile = loadFile("./__mocks__/_pdf.pdf");
+const imgFile = loadFile("./__mocks__/img1.jpeg");
+const pdfFile2 = loadFile("./__mocks__/_pdf2.pdf");
 
 const OK = Symbol("OK");
 
@@ -60,51 +61,48 @@ describe("useSource", () => {
   
     it("should return the initial values for source and error", async () => {
       const { result, waitForNextUpdate  } = renderHook(() => useSource());
-      // const { source, error } = result.current;
       
-      // expect(source).toBe(undefined);
-      // await waitForNextUpdate()
-      await act(async () => {
-      await waitFor(() => {
+       expect(result.current.source).toBe(undefined);
+       await waitForNextUpdate()
         const { source, error } = result.current;
         
         expect(error).toBe(null);
-      })
-      })
+      
     });
 
-    it.skip("loads a file and calls onSourceSuccess callbacks via data URI properly", async () => {
+    it("loads a file and calls onSourceSuccess callbacks via data URI properly", async () => {
       const { func: onSourceSuccess, promise: onSourceSuccessPromise } =
         makeAsyncCallback(OK);
       
-      render(
-        <Viewer
-          file={pdfFile.dataURI}
-          onSourceSuccess={onSourceSuccess}
-        />
-      );
-
-      
-      expect.assertions(1);
+      const { result, waitForNextUpdate  } = renderHook(() => useSource({
+        file:imgFile.dataURI,
+        onSourceSuccess,
+      }));
+      await waitForNextUpdate()
+      expect.assertions(4);
+      const { source, error } = result.current;
+      expect(error).toBe(null);
+      expect(source).toHaveProperty('ext');
+      expect(source).toHaveProperty('data');
       await expect(onSourceSuccessPromise).resolves.toBe(OK);
       
     });
 
-    it.skip("loads a file and calls onSourceSuccess callbacks via data URI properly (param object)", async () => {
+    it("loads a file and calls onSourceSuccess callbacks via data URI properly (param object)", async () => {
       const { func: onSourceSuccess, promise: onSourceSuccessPromise } =
         makeAsyncCallback(OK);
-     
-      render(
-        <Viewer
-          file={{ url: pdfFile.dataURI }}
-          onSourceSuccess={onSourceSuccess}
-        />
-      );
-
-      expect.assertions(1);
-
-      await expect(onSourceSuccessPromise).resolves.toBe(OK);
       
+      const { result, waitForNextUpdate  } = renderHook(() => useSource({
+        file:{ url: imgFile.dataURI },
+        onSourceSuccess,
+      }));
+      await waitForNextUpdate()
+      expect.assertions(4);
+      const { source, error } = result.current;
+      expect(error).toBe(null);
+      expect(source).toHaveProperty('ext');
+      expect(source).toHaveProperty('data');
+      await expect(onSourceSuccessPromise).resolves.toBe(OK);
     });
 
     // FIXME: In Jest, it used to be worked around as described in https://github.com/facebook/jest/issues/7780
@@ -112,34 +110,34 @@ describe("useSource", () => {
       const { func: onSourceSuccess, promise: onSourceSuccessPromise } =
         makeAsyncCallback(OK);
       
-      render(
-        <Viewer
-          file={pdfFile.arrayBuffer}
-          onSourceSuccess={onSourceSuccess}
-        />
-      );
-
-      expect.assertions(1);
-
+      const { result, waitForNextUpdate  } = renderHook(() => useSource({
+        file:imgFile.arrayBuffer,
+        onSourceSuccess,
+      }));
+      await waitForNextUpdate()
+      expect.assertions(4);
+      const { source, error } = result.current;
+      expect(error).toBe(null);
+      expect(source).toHaveProperty('ext');
+      expect(source).toHaveProperty('data');
       await expect(onSourceSuccessPromise).resolves.toBe(OK);
-      
     });
 
     it.skip("loads a file and calls onSourceSuccess  callbacks via Blob properly", async () => {
       const { func: onSourceSuccess, promise: onSourceSuccessPromise } =
-        makeAsyncCallback(OK);
-     
-      render(
-        <Viewer
-          file={pdfFile.blob}
-          onSourceSuccess={onSourceSuccess}
-        />
-      );
-
-      expect.assertions(1);
-
-      await expect(onSourceSuccessPromise).resolves.toBe(OK);
-     
+      makeAsyncCallback(OK);
+    
+    const { result, waitForNextUpdate  } = renderHook(() => useSource({
+      file:imgFile.blob,
+      onSourceSuccess,
+    }));
+    await waitForNextUpdate()
+    expect.assertions(4);
+    const { source, error } = result.current;
+    expect(error).toBe(null);
+    expect(source).toHaveProperty('ext');
+    expect(source).toHaveProperty('data');
+    await expect(onSourceSuccessPromise).resolves.toBe(OK);
     });
 
     it.skip("loads a file and calls onSourceSuccess callbacks via File properly", async () => {
@@ -148,7 +146,7 @@ describe("useSource", () => {
 
       render(
         <Viewer
-          file={pdfFile.file}
+          file={imgFile.file}
           onSourceSuccess={onSourceSuccess}
         />
       );
@@ -181,7 +179,7 @@ describe("useSource", () => {
     
       const { rerender } = render(
         <Viewer
-          file={pdfFile.file}
+          file={imgFile.file}
          onSourceSuccess={onSourceSuccess}
         />
       );
