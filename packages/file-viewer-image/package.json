@@ -1,0 +1,22 @@
+{
+  "name": "@file-viewer/file-viewer-image",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "react": "^17"
+  },
+  "dependencies": {
+    "@file-viewer/comon": "workspace:^"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

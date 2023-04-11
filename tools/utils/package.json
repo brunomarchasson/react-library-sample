@@ -1,0 +1,7 @@
+{
+  "name": "@file-viewer/utils",
+  "files": [
+    "../__mocks__/*"
+  ],
+  "private": true
+}
